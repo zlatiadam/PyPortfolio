@@ -1,0 +1,5 @@
+# Byte-compiled
+*.pyc
+
+# Distribution / packaging
+pyportfolio.egg-info
