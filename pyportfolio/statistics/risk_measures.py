@@ -25,7 +25,7 @@ def std(data):
     return np.std(data)
 
 
-def semivariance(data, avg=None, loss=False):
+def semivariance(data, avg=None):
     
     if type(data) == pd.core.frame.DataFrame:
         data = data.values
@@ -37,31 +37,26 @@ def semivariance(data, avg=None, loss=False):
     sv_count = 0
     
     for val in data:
-        if loss:
-            if val >= avg:
-                sv_sum += (val - avg)**2
-                sv_count += 1
-        else:
-            if val <= avg:
-                sv_sum += (val - avg)**2
-                sv_count += 1
+        if val <= avg:
+            sv_sum += (val - avg)**2
+            sv_count += 1
            
     return sv_sum / sv_count
     
 
-def semivar(data, avg=None, loss=False):
-    return semivariance(data, avg, loss)
+def semivar(data, avg=None):
+    return semivariance(data, avg)
 
     
-def value_at_risk(data, alpha, loss=False, interpolation="linear"):
-    return np.percentile(data, 1 - alpha, interpolation=interpolation) if loss else -1.0*np.percentile(data, alpha, interpolation=interpolation)
+def value_at_risk(data, alpha, interpolation="linear"):
+    return np.percentile(data, alpha, interpolation=interpolation)
 
 
-def VaR(data, alpha, loss=False, interpolation="linear"):
-    return np.percentile(data, 1 - alpha, interpolation=interpolation) if loss else -1.0*np.percentile(data, alpha, interpolation=interpolation)
-    
+def VaR(data, alpha, interpolation="linear"):
+    return np.percentile(data, alpha, interpolation=interpolation)
 
-def drawdown(data, normalize=True, loss=False):
+
+def drawdown(data, normalize=True):
     
     if type(data) == pd.core.frame.DataFrame:
         data = data.values
@@ -70,17 +65,12 @@ def drawdown(data, normalize=True, loss=False):
     dd = 0.0 # drawdown
     avdd = 0.0 # average drawdown
     
-    peak = float("inf") if loss else float("-inf") # may raise error on some CPU-s
+    peak = float("-inf") # may raise error on some CPU-s
     
     for val in data:
-        if loss:
-            if val < peak:
-                peak = val
-            dd = (100.0 * (val - peak) / peak) if normalize else (val - peak)
-        else:
-            if val > peak:
-                peak = val
-            dd = (100.0 * (peak - val) / peak) if normalize else (peak - val)
+        if val > peak:
+            peak = val
+        dd = (100.0 * (peak - val) / peak) if normalize else (peak - val)
         
         if dd > mdd:
             mdd = dd
@@ -90,46 +80,41 @@ def drawdown(data, normalize=True, loss=False):
     return dd, mdd, avdd/len(data)
 
 
-def DD(data, normalize=True, loss=False):
-    return drawdown(data, normalize, loss)[0]
+def DD(data, normalize=True):
+    return drawdown(data, normalize)[0]
 
 
-def maxDD(data, normalize=True, loss=False):
-    return drawdown(data, normalize, loss)[1]
+def maxDD(data, normalize=True):
+    return drawdown(data, normalize)[1]
 
 
-def avDD(data, normalize=True, loss=False):
-    return drawdown(data, normalize, loss)[2]
+def avDD(data, normalize=True):
+    return drawdown(data, normalize)[2]
 
 
-def conditional_value_at_risk(data, alpha, loss=False):
+def conditional_value_at_risk(data, alpha):
     if type(data) == pd.core.frame.DataFrame:
         data = data.values
 
     cvar_sum = 0.0
     cvar_cntr = 0
 
-    VaR_alpha = VaR(data, alpha, loss)
+    VaR_alpha = VaR(data, alpha)
     
     for val in data:
-        if loss:
-            if val > VaR_alpha:
-                cvar_sum += val
-                cvar_cntr += 1
-        else:
-            if val < -1.0*VaR_alpha:
-                cvar_sum += val
-                cvar_cntr += 1
+        if val < VaR_alpha:
+            cvar_sum += val
+            cvar_cntr += 1
             
     return cvar_sum / cvar_cntr
     
 
-def CVaR(data, alpha, loss=False):
-    return conditional_value_at_risk(data, alpha, loss)
+def CVaR(data, alpha):
+    return conditional_value_at_risk(data, alpha)
     
     
-def ES(data, alpha, loss=False):
-    return conditional_value_at_risk(data, alpha, loss)
+def ES(data, alpha):
+    return conditional_value_at_risk(data, alpha)
 
 
 def leverage(weights):
